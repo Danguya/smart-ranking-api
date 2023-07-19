@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   Injectable,
@@ -6,11 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Categoria } from './interfaces/categoria.interface';
-import mongoose, { Model } from 'mongoose';
 import { CriarCategoriaDto } from './dtos/criar-categoria.dto';
 import { AtualizarCategoriaDto } from './dtos/atualizar-categoria.dtos';
-import { Jogador } from 'src/jogadores/interfaces/jogador.interface';
 import { JogadoresService } from 'src/jogadores/jogadores.service';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class CategoriasService {
@@ -83,8 +81,10 @@ export class CategoriasService {
       .in(idJogador)
       .exec();
 
-    if(jogadorJaCadastradoCategoria.length > 0){
-      throw new BadRequestException(`Jogador ${idJogador} já cadastrado na Categoria ${categoria}`)
+    if (jogadorJaCadastradoCategoria.length > 0) {
+      throw new BadRequestException(
+        `Jogador ${idJogador} já cadastrado na Categoria ${categoria}`,
+      );
     }
 
     await this.jogadoresService.consultarJogadorPeloId(idJogador);
@@ -96,6 +96,23 @@ export class CategoriasService {
 
     await this.categoriaModel
       .findOneAndUpdate({ categoria }, { $set: categoriaEncontrada })
+      .exec();
+  }
+
+  async consultarCategoriaDoJogador(idJogador: any): Promise<Categoria> {
+    const jogadores = await this.jogadoresService.consultarTodosJogadores();
+    const jogadorFilter = jogadores.filter(
+      (jogador) => jogador._id == idJogador,
+    );
+
+    if (jogadorFilter.length == 0) {
+      throw new BadRequestException(`O id ${idJogador} não é um jogador!!!`);
+    }
+
+    return await this.categoriaModel
+      .findOne()
+      .where('jogadores')
+      .in(idJogador)
       .exec();
   }
 }
